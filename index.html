@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招新社群二维码｜校记招新</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div id="form-container" class="bg-white p-8 rounded-lg shadow-lg w-96 m-8">
+        <img src="/newsjc.png" style="margin:0 auto;margin-bottom:20px" width="200"/>
+        <!--<h3 class="text-l font-bold mb-6 text-center">获取招新群二维码</h3>-->
+        <form id="retrieve-form" class="space-y-4">
+            <div>
+                <label for="lastname" class="block text-sm font-medium text-gray-700">真实姓名</label>
+                <input type="text" id="lastname" name="lastname" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+            </div>
+            <div>
+                <label for="workcode" class="block text-sm font-medium text-gray-700">学号</label>
+                <input type="text" id="workcode" name="workcode" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+            </div>
+            <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600">提 交</button>
+            <div style="padding-top:5px">
+            <small>提示：为了净化社群环境，防止外来人员混入，需验证真实信息获取群聊二维码，本系统不会存储滥用你的隐私数据，请放心提交。如您输入正确但无法获取，请联系系统管理员微信 GongZK1107 加群。</small>
+            </div>
+        </form>
+        <div id="result" class="mt-6 text-center"></div>
+        <div class="text-center mt-6" style="color:#00000070;font-size:12px;">
+            &copy; 2024 校学生记者中心
+            <br>
+            由 HelloH2O 提供技术支持
+        </div>
+    </div>
+
+    <div id="image-container" class="hidden bg-white p-8 rounded-lg shadow-lg w-96 m-8">
+        <h2 class="text-xl font-bold mb-4 text-center">欢迎加入招新群</h2>
+        <div id="images" class="grid grid-cols-1 gap-4">
+            <!-- 动态添加图片 -->
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('retrieve-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const lastname = document.getElementById('lastname').value.trim();
+            const workcode = document.getElementById('workcode').value.trim();
+
+            // 清除之前的结果
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+
+            try {
+                const response = await fetch('https://zhaoxin.zjweu.com.cn/api/checkuser', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ lastname, workcode })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`网络错误: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.code === 2000) {
+                    // 隐藏表单容器
+                    document.getElementById('form-container').classList.add('hidden');
+
+                    // 显示图片容器
+                    const imageContainer = document.getElementById('image-container');
+                    imageContainer.classList.remove('hidden');
+
+                    // 获取图片数组
+                    const images = data.data;
+
+                    if (Array.isArray(images) && images.length > 0) {
+                        const imagesDiv = document.getElementById('images');
+                        imagesDiv.innerHTML = ''; // 清空之前的图片
+
+                        images.forEach((imageUrl, index) => {
+                            const img = document.createElement('img');
+                            img.src = imageUrl;
+                            img.alt = `Image ${index + 1}`;
+                            img.className = "w-full h-auto rounded-md";
+                            imagesDiv.appendChild(img);
+                        });
+                    } else {
+                        resultDiv.innerHTML = '<p class="text-yellow-500 font-bold">没有找到照片。</p>';
+                    }
+                } else {
+                    resultDiv.innerHTML = `<p class="text-red-500 font-bold">错误: ${data.msg || '无法获取照片。'}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `<p class="text-red-500 font-bold">错误: ${error.msg}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
